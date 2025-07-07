@@ -63,4 +63,12 @@ def get_pruning_schedular(type, file_path, total_pruning_ratio=0.5, layer_num=32
     scaled_data = [1-item for item in scaled_data]
     ratio = [item / sum(scaled_data) * total_pruning_ratio for item in scaled_data]
 
+    
+    # Ensure list is exactly args.layer_num in length
+    if len(ratio) < layer_num:
+        # Repeat or interpolate if fewer than needed
+        ratio = (ratio * (layer_num // len(ratio) + 1))[:layer_num]
+    elif len(ratio) > layer_num:
+        ratio = ratio[:layer_num]
+
     return ratio

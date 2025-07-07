@@ -5,7 +5,8 @@ from .sparsegpt import *
 from quantization.quantizedlinear import QuantizeLinear
 from quantization.quantizer import SymQuantizer
 
-DEV = torch.device('cuda:0')
+DEV = torch.device('cuda:0' if torch.cuda.is_available() else 'cpu')
+
 
 def find_layers(module, layers=[nn.Conv2d, nn.Linear, QuantizeLinear, SymQuantizer], name=''):
     if type(module) in layers:
@@ -57,7 +58,9 @@ def llama_sequential(model, dataloader, dev, nsamples, layer_pruning_ratios, log
     layers[0] = layers[0].cpu()
     model.model.embed_tokens = model.model.embed_tokens.cpu()
     model.model.norm = model.model.norm.cpu()
-    torch.cuda.empty_cache()
+    if torch.cuda.is_available():
+        torch.cuda.empty_cache()
+
 
     outs = torch.zeros_like(inps)
     attention_mask = cache["attention_mask"]
@@ -122,7 +125,9 @@ def llama_sequential(model, dataloader, dev, nsamples, layer_pruning_ratios, log
         layers[i] = layer.cpu()
         del layer
         del gpts
-        torch.cuda.empty_cache()
+        if torch.cuda.is_available():
+            torch.cuda.empty_cache()
+
 
         inps, outs = outs, inps
 

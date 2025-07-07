@@ -153,27 +153,27 @@ def print_trainable_parameters(args, model):
         f"trainable: {100 * trainable_params / all_param}"
     )
 #  skipping mean init for memory out of bound cuda
-# def smart_tokenizer_and_embedding_resize(
-#     special_tokens_dict: Dict,
-#     tokenizer: transformers.PreTrainedTokenizer,
-#     model: transformers.PreTrainedModel,
-# ):
-#     """Resize tokenizer and embedding.
+def smart_tokenizer_and_embedding_resize(
+    special_tokens_dict: Dict,
+    tokenizer: transformers.PreTrainedTokenizer,
+    model: transformers.PreTrainedModel,
+):
+    """Resize tokenizer and embedding.
 
-#     Note: This is the unoptimized version that may make your embedding size not be divisible by 64.
-#     """
-#     num_new_tokens = tokenizer.add_special_tokens(special_tokens_dict)
-#     model.resize_token_embeddings(len(tokenizer))
+    Note: This is the unoptimized version that may make your embedding size not be divisible by 64.
+    """
+    num_new_tokens = tokenizer.add_special_tokens(special_tokens_dict)
+    model.resize_token_embeddings(len(tokenizer))
     
-#     if num_new_tokens > 0:
-#         input_embeddings_data = model.get_input_embeddings().weight.data
-#         output_embeddings_data = model.get_output_embeddings().weight.data
+    if num_new_tokens > 0:
+        input_embeddings_data = model.get_input_embeddings().weight.data
+        output_embeddings_data = model.get_output_embeddings().weight.data
 
-#         input_embeddings_avg = input_embeddings_data[:-num_new_tokens].mean(dim=0, keepdim=True)
-#         output_embeddings_avg = output_embeddings_data[:-num_new_tokens].mean(dim=0, keepdim=True)
+        input_embeddings_avg = input_embeddings_data[:-num_new_tokens].mean(dim=0, keepdim=True)
+        output_embeddings_avg = output_embeddings_data[:-num_new_tokens].mean(dim=0, keepdim=True)
 
-#         input_embeddings_data[-num_new_tokens:] = input_embeddings_avg
-#         output_embeddings_data[-num_new_tokens:] = output_embeddings_avg
+        input_embeddings_data[-num_new_tokens:] = input_embeddings_avg
+        output_embeddings_data[-num_new_tokens:] = output_embeddings_avg
 
 
 def smart_tokenizer_and_embedding_resize(
@@ -204,6 +204,13 @@ def train():
     print(torch.cuda.is_available())
     os.environ["PYTORCH_CUDA_ALLOC_CONF"] = "max_split_size_mb:26"
     args, training_args = get_args()
+    # Auto-select device based on CUDA availability
+    if not torch.cuda.is_available():
+        print("[INFO] CUDA not available. Switching to CPU.")
+        args.pruning_device = 'cpu'
+    else:
+        args.pruning_device = 'cuda'
+
     logger = get_logger("Edge_LLM", args.log_dir)
     set_seed(args.seed)
     logger.info(args)

@@ -8,7 +8,7 @@ Ninja
 peft 
 tqdm 
 bitsandbytes
-shutil 
+evaluate
 huggingface_hub
 wandb
 pandas
